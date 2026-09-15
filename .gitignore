@@ -1,0 +1,32 @@
+# Environment & Secrets
+.env
+.env*.local
+*.pem
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build
+.next/
+out/
+build/
+dist/
+
+# Android / Gradle
+.gradle/
+**/build/
+android/.gradle/
+android/build/
+android/app/build/
+local.properties
+*.apk
+*.aab
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log

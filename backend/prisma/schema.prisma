@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+  OLED_BLACK
+}
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  name             String
+  passwordHash     String
+  themePreference  ThemePreference  @default(SYSTEM)
+  avatarUrl        String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  recipes          Recipe[]
+  refreshTokens    RefreshToken[]
+  passwordResetOtps PasswordResetOtp[]
+
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+model PasswordResetOtp {
+  id        String   @id @default(uuid())
+  email     String
+  codeHash  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  consumed  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, consumed])
+}
+
+model Recipe {
+  id           String             @id @default(uuid())
+  title        String
+  description  String?
+  prepTimeMin  Int                // in minutes
+  servings     Int                @default(1)
+  category     String             // e.g., "Massa", "Sobremesa", "Vegano"
+  imageUrl     String?
+  isPublic     Boolean            @default(true)
+  externalId   String?            // Reference if imported from external source like TheMealDB
+  source       String             @default("GUSTO_USER") // "GUSTO_USER" | "THE_MEAL_DB"
+  
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ingredients  RecipeIngredient[]
+  steps        RecipeStep[]
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([title])
+}
+
+model RecipeIngredient {
+  id         String   @id @default(uuid())
+  name       String
+  quantity   Float
+  unit       String   // e.g., "g", "ml", "colher de sopa", "unidade"
+  recipeId   String
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+}
+
+model RecipeStep {
+  id          String   @id @default(uuid())
+  orderNumber Int
+  instruction String
+  recipeId    String
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId, orderNumber])
+}
