@@ -31,8 +31,11 @@ object NetworkModule {
                 level = HttpLoggingInterceptor.Level.BODY
             }
 
+            val authenticator = TokenAuthenticator(context.applicationContext, interceptor, BASE_URL)
+
             val okHttpClient = OkHttpClient.Builder()
                 .addInterceptor(interceptor)
+                .authenticator(authenticator)
                 .addInterceptor(logging)
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)

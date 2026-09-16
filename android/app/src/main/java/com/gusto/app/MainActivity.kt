@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,6 +26,8 @@ import com.gusto.app.ui.screens.CreateRecipeScreen
 import com.gusto.app.ui.screens.FeedScreen
 import com.gusto.app.ui.screens.RecipeDetailScreen
 import com.gusto.app.ui.theme.GustoTheme
+import com.gusto.app.ui.viewmodel.FeedViewModel
+import com.gusto.app.ui.viewmodel.RecipeDetailViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -63,8 +66,12 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("feed") {
+                            val feedViewModel: FeedViewModel = remember {
+                                FeedViewModel(recipeRepository)
+                            }
+
                             FeedScreen(
-                                recipeRepository = recipeRepository,
+                                viewModel = feedViewModel,
                                 authRepository = authRepository,
                                 currentTheme = currentTheme,
                                 onThemeChange = { newTheme ->
@@ -102,9 +109,12 @@ class MainActivity : ComponentActivity() {
                             }
                         ) { backStackEntry ->
                             val recipeId = backStackEntry.arguments?.getString("recipeId") ?: ""
+                            val detailViewModel: RecipeDetailViewModel = remember(recipeId) {
+                                RecipeDetailViewModel(recipeId, recipeRepository)
+                            }
+
                             RecipeDetailScreen(
-                                recipeId = recipeId,
-                                recipeRepository = recipeRepository,
+                                viewModel = detailViewModel,
                                 onBack = { navController.popBackStack() }
                             )
                         }

@@ -62,13 +62,11 @@ export async function GET(req: NextRequest) {
           user: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
       }),
       prisma.recipe.count({ where }),
     ]);
 
-    // Format local recipes to canonical Gusto schema
+    // Formatar receitas do banco local
     const formattedDbRecipes = dbRecipes.map(r => ({
       id: r.id,
       title: r.title,
@@ -77,31 +75,35 @@ export async function GET(req: NextRequest) {
       servings: r.servings,
       category: r.category,
       imageUrl: r.imageUrl,
-      source: r.source,
+      source: r.source as 'GUSTO_USER' | 'THE_MEAL_DB',
       author: r.user.name,
       createdAt: r.createdAt.toISOString(),
       ingredients: r.ingredients.map(i => ({ name: i.name, quantity: i.quantity, unit: i.unit })),
       steps: r.steps.map(s => ({ orderNumber: s.orderNumber, instruction: s.instruction })),
     }));
 
-    // If external recipes are requested (e.g. discovery feed), fetch and integrate TheMealDB
-    let combined: (GustoNormalizedRecipe | typeof formattedDbRecipes[0])[] = formattedDbRecipes;
-    if (includeExternal && page === 1) {
-      const externalRecipes = await searchTheMealDb(search);
-      const filteredExternal = category && category !== 'Todos'
-        ? externalRecipes.filter(r => r.category.toLowerCase().includes(category.toLowerCase()))
-        : externalRecipes;
-
-      combined = [...formattedDbRecipes, ...filteredExternal];
+    // Buscar e filtrar receitas do catálogo do TheMealDB
+    let externalRecipes: GustoNormalizedRecipe[] = [];
+    if (includeExternal) {
+      externalRecipes = await searchTheMealDb(search, category || undefined);
     }
 
+    // Combinar receitas locais e externas
+    const combinedAll = [...formattedDbRecipes, ...externalRecipes];
+
+    // Aplicar paginação no conjunto unificado
+    const totalCount = combinedAll.length;
+    const paginatedItems = combinedAll.slice(skip, skip + limit);
+    const hasMore = skip + limit < totalCount;
+
     return NextResponse.json({
-      data: combined,
+      data: paginatedItems,
       meta: {
         page,
         limit,
+        totalItems: totalCount,
         totalLocal: totalDbCount,
-        hasMore: formattedDbRecipes.length === limit,
+        hasMore,
       },
     });
   } catch (error) {
