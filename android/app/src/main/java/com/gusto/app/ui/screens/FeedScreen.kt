@@ -244,7 +244,7 @@ fun FeedScreen(
             // Lista de Receitas, Loading ou Empty State
             if (uiState.isLoading && uiState.recipes.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterVertically) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -261,7 +261,7 @@ fun FeedScreen(
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterVertically) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = if (uiState.isFavoritesOnly) Icons.Outlined.FavoriteBorder else Icons.Default.Search,
                             contentDescription = null,
