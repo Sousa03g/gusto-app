@@ -310,6 +310,43 @@ export async function searchTheMealDb(query: string = '', categoryPt?: string): 
   return filtered;
 }
 
+const textTranslationCache = new Map<string, string>();
+
+/**
+ * Traduz textos livres (instruções do modo de preparo, títulos) para Português
+ */
+export async function translateTextToPt(text: string): Promise<string> {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length < 3) return text;
+
+  if (textTranslationCache.has(trimmed)) {
+    return textTranslationCache.get(trimmed)!;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=${encodeURIComponent(trimmed)}`;
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && Array.isArray(data[0])) {
+        const translated = data[0].map((s: any) => s[0]).join('');
+        if (translated && translated.trim()) {
+          textTranslationCache.set(trimmed, translated.trim());
+          return translated.trim();
+        }
+      }
+    }
+  } catch (err) {
+    // Retorna fallback original se falhar ou der timeout
+  }
+
+  return text;
+}
+
 export async function getTheMealDbRecipeById(mealId: string): Promise<GustoNormalizedRecipe | null> {
   try {
     const cleanId = mealId.replace(/^mealdb-/, '');
@@ -319,7 +356,24 @@ export async function getTheMealDbRecipeById(mealId: string): Promise<GustoNorma
     const data = await response.json();
     if (!data.meals || data.meals.length === 0) return null;
 
-    return mapMealDbToGusto(data.meals[0]);
+    const baseRecipe = mapMealDbToGusto(data.meals[0]);
+
+    // Traduzir todas as instruções do modo de preparo de forma paralela
+    const translatedSteps = await Promise.all(
+      baseRecipe.steps.map(async (step) => ({
+        orderNumber: step.orderNumber,
+        instruction: await translateTextToPt(step.instruction),
+      }))
+    );
+
+    // Traduzir também o título para português se necessário
+    const translatedTitle = await translateTextToPt(baseRecipe.title);
+
+    return {
+      ...baseRecipe,
+      title: translatedTitle,
+      steps: translatedSteps,
+    };
   } catch (error) {
     console.error('Erro ao buscar receita por ID do TheMealDB:', error);
     return null;
