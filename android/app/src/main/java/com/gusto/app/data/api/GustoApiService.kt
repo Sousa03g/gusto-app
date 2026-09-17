@@ -60,5 +60,24 @@ interface GustoApiService {
         @Query("name") name: String? = null,
         @Query("clear") clear: Boolean? = null
     ): Response<ApiResponse<List<String>>>
+
+    @GET("api/shopping-list")
+    suspend fun getShoppingItems(): Response<ApiResponse<List<ShoppingItem>>>
+
+    @POST("api/shopping-list")
+    suspend fun addShoppingItem(@Body body: Map<String, @JvmSuppressWildcards Any?>): Response<ApiResponse<ShoppingItem>>
+
+    @POST("api/shopping-list")
+    suspend fun batchAddShoppingItems(@Body body: Map<String, @JvmSuppressWildcards List<Map<String, Any?>>>): Response<ApiResponse<List<ShoppingItem>>>
+
+    @PATCH("api/shopping-list")
+    suspend fun toggleShoppingItem(@Body body: Map<String, @JvmSuppressWildcards Any>): Response<ApiResponse<Any>>
+
+    @DELETE("api/shopping-list")
+    suspend fun deleteShoppingItem(
+        @Query("id") id: String? = null,
+        @Query("clearCompleted") clearCompleted: Boolean? = null,
+        @Query("clearAll") clearAll: Boolean? = null
+    ): Response<ApiResponse<Any>>
 }
 

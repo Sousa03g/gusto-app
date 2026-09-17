@@ -116,6 +116,14 @@ class RecipeRepository(context: Context) {
 
     fun getFavoriteRecipes(): List<Recipe> = localDb.getFavoriteRecipes()
 
+    fun recordRecipeCooked(id: String) {
+        localDb.incrementCookCount(id)
+    }
+
+    fun getFavoriteRecipesByOldest(): List<Recipe> = localDb.getFavoriteRecipesByOldest()
+
+    fun getMostCookedRecipes(limit: Int = 10): List<Recipe> = localDb.getMostCookedRecipes(limit)
+
     private fun filterLocalRecipes(
         recipes: List<Recipe>,
         search: String?,

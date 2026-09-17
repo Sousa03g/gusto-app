@@ -109,3 +109,14 @@ data class CreateStepRequest(
     val orderNumber: Int,
     val instruction: String
 )
+
+data class ShoppingItem(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val name: String,
+    val quantity: Double? = null,
+    val unit: String? = null,
+    var isChecked: Boolean = false,
+    val sourceRecipeTitle: String? = null,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
