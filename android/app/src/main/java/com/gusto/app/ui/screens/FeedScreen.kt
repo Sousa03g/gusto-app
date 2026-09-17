@@ -39,6 +39,7 @@ fun FeedScreen(
     currentTheme: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
     onFridgeClick: () -> Unit,
+    onShoppingListClick: () -> Unit,
     onRecipeClick: (String) -> Unit,
     onCreateRecipeClick: () -> Unit,
     onLogout: () -> Unit
@@ -140,6 +141,20 @@ fun FeedScreen(
                             onClick = {
                                 showMenu = false
                                 onFridgeClick()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Lista de Compras") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingCart,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            onClick = {
+                                showMenu = false
+                                onShoppingListClick()
                             }
                         )
                         DropdownMenuItem(
