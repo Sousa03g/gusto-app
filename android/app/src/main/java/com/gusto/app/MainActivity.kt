@@ -22,15 +22,18 @@ import com.gusto.app.data.model.ThemeMode
 import com.gusto.app.data.repository.AuthRepository
 import com.gusto.app.data.repository.FridgeRepository
 import com.gusto.app.data.repository.RecipeRepository
+import com.gusto.app.data.repository.ShoppingListRepository
 import com.gusto.app.ui.screens.AuthScreen
 import com.gusto.app.ui.screens.CreateRecipeScreen
 import com.gusto.app.ui.screens.FeedScreen
 import com.gusto.app.ui.screens.FridgeScreen
 import com.gusto.app.ui.screens.RecipeDetailScreen
+import com.gusto.app.ui.screens.ShoppingListScreen
 import com.gusto.app.ui.theme.GustoTheme
 import com.gusto.app.ui.viewmodel.FeedViewModel
 import com.gusto.app.ui.viewmodel.FridgeViewModel
 import com.gusto.app.ui.viewmodel.RecipeDetailViewModel
+import com.gusto.app.ui.viewmodel.ShoppingListViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -41,6 +44,7 @@ class MainActivity : ComponentActivity() {
         val authRepository = AuthRepository(this)
         val recipeRepository = RecipeRepository(this)
         val fridgeRepository = FridgeRepository(this)
+        val shoppingListRepository = ShoppingListRepository(this)
 
         setContent {
             var currentTheme by remember { mutableStateOf(authRepository.getSavedTheme()) }
@@ -84,6 +88,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onFridgeClick = {
                                     navController.navigate("fridge")
+                                },
+                                onShoppingListClick = {
+                                    navController.navigate("shopping_list")
                                 },
                                 onRecipeClick = { recipeId ->
                                     navController.navigate("recipe/$recipeId")
@@ -135,6 +142,49 @@ class MainActivity : ComponentActivity() {
                                 onBack = { navController.popBackStack() },
                                 onRecipeClick = { recipeId ->
                                     navController.navigate("recipe/$recipeId")
+                                },
+                                onOpenShoppingList = {
+                                    navController.navigate("shopping_list")
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = "shopping_list",
+                            enterTransition = {
+                                slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(260)
+                                )
+                            },
+                            exitTransition = {
+                                slideOutOfContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(260)
+                                )
+                            },
+                            popEnterTransition = {
+                                slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(260)
+                                )
+                            },
+                            popExitTransition = {
+                                slideOutOfContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(260)
+                                )
+                            }
+                        ) {
+                            val shoppingListViewModel: ShoppingListViewModel = remember {
+                                ShoppingListViewModel(shoppingListRepository, fridgeRepository, recipeRepository)
+                            }
+
+                            ShoppingListScreen(
+                                viewModel = shoppingListViewModel,
+                                onBack = { navController.popBackStack() },
+                                onOpenFridge = {
+                                    navController.navigate("fridge")
                                 }
                             )
                         }
