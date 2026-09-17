@@ -20,13 +20,16 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.gusto.app.data.model.ThemeMode
 import com.gusto.app.data.repository.AuthRepository
+import com.gusto.app.data.repository.FridgeRepository
 import com.gusto.app.data.repository.RecipeRepository
 import com.gusto.app.ui.screens.AuthScreen
 import com.gusto.app.ui.screens.CreateRecipeScreen
 import com.gusto.app.ui.screens.FeedScreen
+import com.gusto.app.ui.screens.FridgeScreen
 import com.gusto.app.ui.screens.RecipeDetailScreen
 import com.gusto.app.ui.theme.GustoTheme
 import com.gusto.app.ui.viewmodel.FeedViewModel
+import com.gusto.app.ui.viewmodel.FridgeViewModel
 import com.gusto.app.ui.viewmodel.RecipeDetailViewModel
 
 class MainActivity : ComponentActivity() {
@@ -37,6 +40,7 @@ class MainActivity : ComponentActivity() {
 
         val authRepository = AuthRepository(this)
         val recipeRepository = RecipeRepository(this)
+        val fridgeRepository = FridgeRepository(this)
 
         setContent {
             var currentTheme by remember { mutableStateOf(authRepository.getSavedTheme()) }
@@ -78,6 +82,9 @@ class MainActivity : ComponentActivity() {
                                     currentTheme = newTheme
                                     authRepository.saveTheme(newTheme)
                                 },
+                                onFridgeClick = {
+                                    navController.navigate("fridge")
+                                },
                                 onRecipeClick = { recipeId ->
                                     navController.navigate("recipe/$recipeId")
                                 },
@@ -88,6 +95,46 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("auth") {
                                         popUpTo("feed") { inclusive = true }
                                     }
+                                }
+                            )
+                        }
+
+                        composable(
+                            route = "fridge",
+                            enterTransition = {
+                                slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(260)
+                                )
+                            },
+                            exitTransition = {
+                                slideOutOfContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(260)
+                                )
+                            },
+                            popEnterTransition = {
+                                slideIntoContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(260)
+                                )
+                            },
+                            popExitTransition = {
+                                slideOutOfContainer(
+                                    AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(260)
+                                )
+                            }
+                        ) {
+                            val fridgeViewModel: FridgeViewModel = remember {
+                                FridgeViewModel(fridgeRepository, recipeRepository)
+                            }
+
+                            FridgeScreen(
+                                viewModel = fridgeViewModel,
+                                onBack = { navController.popBackStack() },
+                                onRecipeClick = { recipeId ->
+                                    navController.navigate("recipe/$recipeId")
                                 }
                             )
                         }
