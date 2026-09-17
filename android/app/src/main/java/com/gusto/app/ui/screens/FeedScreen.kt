@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
@@ -27,6 +28,7 @@ import coil.compose.AsyncImage
 import com.gusto.app.data.model.Recipe
 import com.gusto.app.data.model.ThemeMode
 import com.gusto.app.data.repository.AuthRepository
+import com.gusto.app.ui.components.ThemeSelectionDialog
 import com.gusto.app.ui.viewmodel.FeedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,12 +38,14 @@ fun FeedScreen(
     authRepository: AuthRepository,
     currentTheme: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
+    onFridgeClick: () -> Unit,
     onRecipeClick: (String) -> Unit,
     onCreateRecipeClick: () -> Unit,
     onLogout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
 
@@ -67,6 +71,18 @@ fun FeedScreen(
             }
     }
 
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            show = true,
+            currentTheme = currentTheme,
+            onSelectTheme = { selected ->
+                onThemeChange(selected)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,6 +104,17 @@ fun FeedScreen(
                     containerColor = MaterialTheme.colorScheme.background
                 ),
                 actions = {
+                    IconButton(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onFridgeClick()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Kitchen,
+                            contentDescription = "Minha Geladeira",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+
                     IconButton(onClick = { showMenu = !showMenu }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
@@ -102,29 +129,43 @@ fun FeedScreen(
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Tema Claro") },
+                            text = { Text("Minha Geladeira") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Kitchen,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
                             onClick = {
-                                onThemeChange(ThemeMode.LIGHT)
                                 showMenu = false
+                                onFridgeClick()
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Tema Escuro") },
+                            text = { Text("Temas") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Palette,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            },
                             onClick = {
-                                onThemeChange(ThemeMode.DARK)
                                 showMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("True Black (OLED)") },
-                            onClick = {
-                                onThemeChange(ThemeMode.OLED_BLACK)
-                                showMenu = false
+                                showThemeDialog = true
                             }
                         )
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Sair da Conta", color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            },
                             onClick = {
                                 authRepository.logout()
                                 showMenu = false
