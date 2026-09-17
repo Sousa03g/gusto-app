@@ -38,7 +38,8 @@ import com.gusto.app.ui.viewmodel.RecipeMatch
 fun FridgeScreen(
     viewModel: FridgeViewModel,
     onBack: () -> Unit,
-    onRecipeClick: (String) -> Unit
+    onRecipeClick: (String) -> Unit,
+    onOpenShoppingList: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val haptic = LocalHapticFeedback.current
@@ -93,6 +94,13 @@ fun FridgeScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenShoppingList) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Lista de Compras",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                     if (uiState.ingredients.isNotEmpty()) {
                         IconButton(onClick = { viewModel.setShowClearDialog(true) }) {
                             Icon(
