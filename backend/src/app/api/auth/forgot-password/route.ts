@@ -37,7 +37,14 @@ export async function POST(req: NextRequest) {
       console.log(`[AUTH] Código OTP gerado para ${email}: ${otpCode}`);
 
       // Dispara o envio do e-mail com Resend
-      await sendPasswordResetEmail({ to: email, otpCode });
+      const emailResult = await sendPasswordResetEmail({ to: email, otpCode });
+      if (!emailResult.success) {
+        console.error(`[AUTH] Falha ao enviar e-mail: ${emailResult.error}`);
+        return NextResponse.json(
+          { error: emailResult.error || 'Erro ao enviar e-mail de recuperação.' },
+          { status: 502 }
+        );
+      }
     }
 
     const isDev = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_OTP === 'true';

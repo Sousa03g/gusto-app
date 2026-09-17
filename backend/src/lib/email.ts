@@ -1,6 +1,3 @@
-const resendApiKey = process.env.RESEND_API_KEY;
-const defaultSender = process.env.EMAIL_FROM || 'Gusto <onboarding@resend.dev>';
-
 interface SendPasswordResetEmailParams {
   to: string;
   otpCode: string;
@@ -13,11 +10,17 @@ export async function sendPasswordResetEmail({
   to,
   otpCode,
 }: SendPasswordResetEmailParams): Promise<{ success: boolean; error?: string }> {
-  if (!resendApiKey) {
-    console.warn(
-      `[EMAIL] RESEND_API_KEY não configurada no .env. Código OTP para ${to}: ${otpCode}`
+  const apiKey = process.env.RESEND_API_KEY;
+  const sender = process.env.EMAIL_FROM || 'Gusto <onboarding@resend.dev>';
+
+  if (!apiKey) {
+    console.error(
+      `[EMAIL] RESEND_API_KEY não configurada no servidor. Código OTP para ${to}: ${otpCode}`
     );
-    return { success: true };
+    return {
+      success: false,
+      error: 'RESEND_API_KEY não configurada no servidor da Vercel.',
+    };
   }
 
   const html = `
@@ -64,11 +67,11 @@ export async function sendPasswordResetEmail({
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: defaultSender,
+        from: sender,
         to: [to],
         subject: 'Seu código de recuperação de senha — Gusto',
         html,
