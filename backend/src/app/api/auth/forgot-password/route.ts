@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { createPasswordResetOtp } from '@/lib/auth';
+import { sendPasswordResetEmail } from '@/lib/email';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const forgotPasswordSchema = z.object({
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
       const otpCode = await createPasswordResetOtp(user.id, email);
       devOtp = otpCode;
       console.log(`[AUTH] Código OTP gerado para ${email}: ${otpCode}`);
+
+      // Dispara o envio do e-mail com Resend
+      await sendPasswordResetEmail({ to: email, otpCode });
     }
 
     const isDev = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_OTP === 'true';
