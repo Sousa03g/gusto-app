@@ -5,12 +5,27 @@ import com.gusto.app.data.api.AuthInterceptor
 import com.gusto.app.data.api.GustoApiService
 import com.gusto.app.data.api.NetworkModule
 import com.gusto.app.data.model.*
+import org.json.JSONObject
 
 class AuthRepository(context: Context) {
     private val api: GustoApiService = NetworkModule.provideApiService(context)
     private val interceptor: AuthInterceptor = NetworkModule.getAuthInterceptor(context)
 
     fun isLoggedIn(): Boolean = !interceptor.getAccessToken().isNullOrEmpty()
+
+    private fun parseErrorMessage(errorBody: String?, defaultMessage: String): String {
+        if (errorBody.isNullOrBlank()) return defaultMessage
+        return try {
+            val json = JSONObject(errorBody)
+            when {
+                json.has("error") -> json.getString("error")
+                json.has("message") -> json.getString("message")
+                else -> defaultMessage
+            }
+        } catch (_: Exception) {
+            defaultMessage
+        }
+    }
 
     suspend fun login(email: String, password: String): Result<User> {
         return try {
@@ -20,7 +35,8 @@ class AuthRepository(context: Context) {
                 interceptor.saveTokens(body.accessToken, body.refreshToken)
                 Result.success(body.user ?: User(id = "", name = "Chef", email = email))
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Falha ao realizar login"))
+                val msg = parseErrorMessage(response.errorBody()?.string(), "Falha ao realizar login")
+                Result.failure(Exception(msg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -35,7 +51,8 @@ class AuthRepository(context: Context) {
                 interceptor.saveTokens(body.accessToken, body.refreshToken)
                 Result.success(body.user ?: User(id = "", name = name, email = email))
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Falha ao cadastrar"))
+                val msg = parseErrorMessage(response.errorBody()?.string(), "Falha ao cadastrar")
+                Result.failure(Exception(msg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -48,7 +65,8 @@ class AuthRepository(context: Context) {
             if (response.isSuccessful) {
                 Result.success(response.body()?.message ?: "Código enviado com sucesso")
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Erro ao solicitar redefinição"))
+                val msg = parseErrorMessage(response.errorBody()?.string(), "Erro ao solicitar redefinição")
+                Result.failure(Exception(msg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -61,7 +79,8 @@ class AuthRepository(context: Context) {
             if (response.isSuccessful) {
                 Result.success(response.body()?.message ?: "Senha redefinida com sucesso")
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Código inválido ou erro"))
+                val msg = parseErrorMessage(response.errorBody()?.string(), "Código inválido ou expirado")
+                Result.failure(Exception(msg))
             }
         } catch (e: Exception) {
             Result.failure(e)
