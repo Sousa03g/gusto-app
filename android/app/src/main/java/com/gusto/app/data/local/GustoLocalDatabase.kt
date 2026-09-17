@@ -17,13 +17,17 @@ class GustoLocalDatabase(context: Context) : SQLiteOpenHelper(
 
     companion object {
         private const val DATABASE_NAME = "gusto_local.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         private const val TABLE_RECIPES = "recipes"
         private const val COLUMN_ID = "id"
         private const val COLUMN_JSON = "json_data"
         private const val COLUMN_IS_FAVORITE = "is_favorite"
         private const val COLUMN_UPDATED_AT = "updated_at"
+
+        private const val TABLE_FRIDGE = "fridge_items"
+        private const val COLUMN_FRIDGE_NAME = "name"
+        private const val COLUMN_FRIDGE_CREATED_AT = "created_at"
 
         @Volatile
         private var instance: GustoLocalDatabase? = null
@@ -46,11 +50,26 @@ class GustoLocalDatabase(context: Context) : SQLiteOpenHelper(
         """.trimIndent()
         db.execSQL(createTableQuery)
         db.execSQL("CREATE INDEX idx_fav ON $TABLE_RECIPES ($COLUMN_IS_FAVORITE)")
+
+        val createFridgeQuery = """
+            CREATE TABLE IF NOT EXISTS $TABLE_FRIDGE (
+                $COLUMN_FRIDGE_NAME TEXT PRIMARY KEY,
+                $COLUMN_FRIDGE_CREATED_AT INTEGER NOT NULL
+            )
+        """.trimIndent()
+        db.execSQL(createFridgeQuery)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_RECIPES")
-        onCreate(db)
+        if (oldVersion < 2) {
+            val createFridgeQuery = """
+                CREATE TABLE IF NOT EXISTS $TABLE_FRIDGE (
+                    $COLUMN_FRIDGE_NAME TEXT PRIMARY KEY,
+                    $COLUMN_FRIDGE_CREATED_AT INTEGER NOT NULL
+                )
+            """.trimIndent()
+            db.execSQL(createFridgeQuery)
+        }
     }
 
     fun saveRecipe(recipe: Recipe, isFav: Boolean? = null) {
@@ -204,4 +223,76 @@ class GustoLocalDatabase(context: Context) : SQLiteOpenHelper(
         }
         return set
     }
+
+    // ==========================================
+    // PERSISTÊNCIA EM BANCO: MINHA GELADEIRA
+    // ==========================================
+
+    fun addFridgeItem(name: String): Boolean {
+        val clean = name.trim()
+        if (clean.isBlank()) return false
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_FRIDGE_NAME, clean)
+            put(COLUMN_FRIDGE_CREATED_AT, System.currentTimeMillis())
+        }
+        val result = db.insertWithOnConflict(TABLE_FRIDGE, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        return result != -1L
+    }
+
+    fun removeFridgeItem(name: String): Boolean {
+        val clean = name.trim()
+        if (clean.isBlank()) return false
+        val db = writableDatabase
+        val rows = db.delete(TABLE_FRIDGE, "LOWER($COLUMN_FRIDGE_NAME) = LOWER(?)", arrayOf(clean))
+        return rows > 0
+    }
+
+    fun getFridgeItems(): List<String> {
+        val list = mutableListOf<String>()
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_FRIDGE,
+            arrayOf(COLUMN_FRIDGE_NAME),
+            null,
+            null,
+            null,
+            null,
+            "$COLUMN_FRIDGE_CREATED_AT DESC"
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(it.getString(0))
+            }
+        }
+        return list
+    }
+
+    fun clearFridgeItems(): Boolean {
+        val db = writableDatabase
+        val rows = db.delete(TABLE_FRIDGE, null, null)
+        return rows >= 0
+    }
+
+    fun saveFridgeItems(items: List<String>) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete(TABLE_FRIDGE, null, null)
+            for (item in items) {
+                val clean = item.trim()
+                if (clean.isNotBlank()) {
+                    val values = ContentValues().apply {
+                        put(COLUMN_FRIDGE_NAME, clean)
+                        put(COLUMN_FRIDGE_CREATED_AT, System.currentTimeMillis())
+                    }
+                    db.insertWithOnConflict(TABLE_FRIDGE, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
 }
+

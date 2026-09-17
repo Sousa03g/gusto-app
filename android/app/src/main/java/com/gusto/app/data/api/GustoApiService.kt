@@ -45,4 +45,20 @@ interface GustoApiService {
         @Query("q") query: String? = null,
         @Query("category") category: String? = null
     ): Response<RecipeListResponse>
+
+    @GET("api/fridge")
+    suspend fun getFridgeItems(): Response<ApiResponse<List<String>>>
+
+    @POST("api/fridge")
+    suspend fun addFridgeItem(@Body body: Map<String, String>): Response<ApiResponse<List<String>>>
+
+    @POST("api/fridge")
+    suspend fun syncFridgeItems(@Body body: Map<String, List<String>>): Response<ApiResponse<List<String>>>
+
+    @DELETE("api/fridge")
+    suspend fun deleteFridgeItem(
+        @Query("name") name: String? = null,
+        @Query("clear") clear: Boolean? = null
+    ): Response<ApiResponse<List<String>>>
 }
+
