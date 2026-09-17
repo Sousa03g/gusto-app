@@ -28,8 +28,10 @@ export async function POST(req: NextRequest) {
     const validated = resetPasswordSchema.safeParse(body);
 
     if (!validated.success) {
+      const fieldErrors = validated.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] || 'Dados inválidos';
       return NextResponse.json(
-        { error: 'Dados inválidos', details: validated.error.flatten().fieldErrors },
+        { error: firstError, details: fieldErrors },
         { status: 400 }
       );
     }

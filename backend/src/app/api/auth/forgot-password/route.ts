@@ -28,20 +28,22 @@ export async function POST(req: NextRequest) {
     const { email } = validated.data;
     const user = await prisma.user.findUnique({ where: { email } });
 
-    // Prevent account enumeration by always returning success response
+    let devOtp: string | null = null;
+
     if (user) {
       const otpCode = await createPasswordResetOtp(user.id, email);
-
-      // In production, send via Sendgrid / Resend / AWS SES.
-      // We log to server console for development/test purposes.
+      devOtp = otpCode;
       console.log(`[AUTH] Código OTP gerado para ${email}: ${otpCode}`);
     }
 
+    const isDev = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_OTP === 'true';
+
     return NextResponse.json({
       message: 'Se este e-mail estiver cadastrado, um código de verificação seguro (OTP) foi enviado.',
+      devOtp: isDev ? devOtp : undefined,
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    return NextResponse.json({ error: 'Erro ao processar recuperação' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao processar recuperação de senha' }, { status: 500 });
   }
 }
