@@ -82,7 +82,18 @@ class RecipeDetailViewModel(
         _uiState.update { state ->
             val set = state.completedSteps.toMutableSet()
             if (set.contains(orderNumber)) set.remove(orderNumber) else set.add(orderNumber)
+            val totalSteps = state.recipe?.steps?.size ?: 0
+            if (totalSteps > 0 && set.size == totalSteps) {
+                // Usuário completou todos os passos do preparo!
+                state.recipe?.let { recipeRepository.recordRecipeCooked(it.id) }
+            }
             state.copy(completedSteps = set)
+        }
+    }
+
+    fun markRecipeCooked() {
+        _uiState.value.recipe?.let {
+            recipeRepository.recordRecipeCooked(it.id)
         }
     }
 
