@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
       const otpCode = await createPasswordResetOtp(user.id, email);
       devOtp = otpCode;
       console.log(`[AUTH] Código OTP gerado para ${email}: ${otpCode}`);
-
       // Dispara o envio do e-mail com Resend
       const emailResult = await sendPasswordResetEmail({ to: email, otpCode });
       if (!emailResult.success) {
