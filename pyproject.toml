@@ -1,0 +1,27 @@
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --cov=src --cov-report=term-missing --cov-report=xml:test-reports/coverage.xml --junitxml=test-reports/junit.xml --cov-fail-under=85"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "."
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''

@@ -1,0 +1,59 @@
+name: QAOps & DevOps Quality Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  quality-gate:
+    name: Pipeline de Qualidade e Testes (QAOps)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Ambiente Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 3. Instalar Dependências do Projeto
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: 4. Quality Gate 1 - Validação de Build e Sintaxe
+        run: |
+          echo "Executando compilação prévia e validação de sintaxe..."
+          python -m compileall src
+
+      - name: 5. Quality Gate 2 - Análise Estática de Código (Lint & Formatação)
+        run: |
+          echo "Verificando formatação com Black..."
+          black --check src tests
+          echo "Executando análise de linter com Flake8..."
+          flake8 src tests
+
+      - name: 6. Quality Gate 3 - Auditoria de Segurança de Dependências
+        run: |
+          echo "Analisando vulnerabilidades conhecidas em pacotes..."
+          pip-audit -r requirements.txt --desc on
+
+      - name: 7. Quality Gate 4 & 5 - Testes Automatizados e Cobertura de Código
+        run: |
+          mkdir -p test-reports
+          echo "Executando testes unitários, testes de integração e verificando threshold de cobertura..."
+          pytest --cov=src --cov-report=term-missing --cov-report=html:test-reports/coverage_html --cov-report=xml:test-reports/coverage.xml --junitxml=test-reports/junit.xml --cov-fail-under=85
+
+      - name: 8. Preservação de Evidências e Artefatos de Qualidade
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qaops-evidencias-relatorios
+          path: test-reports/
+          retention-days: 14
