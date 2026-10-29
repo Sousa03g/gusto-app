@@ -191,7 +191,7 @@ const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hora
 /**
  * Normaliza e traduz ingrediente para PT-BR
  */
-function translateIngredientName(name: string): string {
+export function translateIngredientName(name: string): string {
   const clean = name.trim().toLowerCase();
   if (INGREDIENT_TRANSLATIONS[clean]) {
     return INGREDIENT_TRANSLATIONS[clean];
@@ -207,7 +207,7 @@ function translateIngredientName(name: string): string {
 /**
  * Normaliza e traduz unidade de medida para PT-BR
  */
-function translateUnit(unitStr: string): string {
+export function translateUnit(unitStr: string): string {
   const clean = unitStr.trim().toLowerCase();
   if (UNIT_TRANSLATIONS[clean]) {
     return UNIT_TRANSLATIONS[clean];
@@ -380,7 +380,7 @@ export async function getTheMealDbRecipeById(mealId: string): Promise<GustoNorma
   }
 }
 
-function mapMealDbToGusto(meal: Record<string, any>): GustoNormalizedRecipe {
+export function mapMealDbToGusto(meal: Record<string, any>): GustoNormalizedRecipe {
   const ingredients: GustoNormalizedIngredient[] = [];
 
   for (let i = 1; i <= 20; i++) {
@@ -429,7 +429,7 @@ function mapMealDbToGusto(meal: Record<string, any>): GustoNormalizedRecipe {
   };
 }
 
-function parseMeasure(measureStr: string): { quantity: number; unit: string } {
+export function parseMeasure(measureStr: string): { quantity: number; unit: string } {
   const trimmed = measureStr.trim();
   const match = trimmed.match(/^([\d/.\s]+)(.*)$/);
 

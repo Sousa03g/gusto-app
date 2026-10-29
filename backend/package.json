@@ -6,6 +6,12 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "audit": "npm audit --audit-level=high",
+    "qa": "npm run typecheck && npm run test:coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:db-push": "prisma db push"
@@ -24,7 +30,9 @@
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
+    "@vitest/coverage-v8": "^5.0.5",
     "prisma": "^6.4.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^5.0.5"
   }
 }

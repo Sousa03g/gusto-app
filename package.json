@@ -1,0 +1,14 @@
+{
+  "name": "gusto-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npm --prefix backend test",
+    "test:coverage": "npm --prefix backend run test:coverage",
+    "typecheck": "npm --prefix backend run typecheck",
+    "qa": "npm --prefix backend run qa",
+    "simulate:test-fail": "node scripts/simulate_failure.js --inject-test-failure",
+    "simulate:type-fail": "node scripts/simulate_failure.js --inject-type-failure",
+    "simulate:revert": "node scripts/simulate_failure.js --revert"
+  }
+}
