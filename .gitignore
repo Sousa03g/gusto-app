@@ -40,3 +40,6 @@ android/build/
 Thumbs.db
 .vscode/
 .idea/
+
+*.docx
+*.tsbuildinfo
