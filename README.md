@@ -1,189 +1,176 @@
-# OrderFlow API — Pipeline de Qualidade, DevOps e QAOps
+# Gusto — Pipeline de Qualidade, DevOps e QAOps
 
 > **Projeto Prático da Disciplina de Qualidade de Software / DevOps**  
-> **Tema:** Automação de Verificações de Qualidade e Bloqueio de Regressões no Fluxo de Entrega Contínua.
+> **Tema:** Automação de Verificações de Qualidade, Quality Gates e Bloqueio de Regressões no Fluxo de Entrega Contínua.  
+> **Aplicação sob Teste:** **Gusto** (Plataforma de Receitas Culinárias com Foco no Microsserviço de Backend em Node.js / TypeScript / Next.js).
 
 ---
 
 ## 1. Visão Geral do Sistema
 
-O **OrderFlow API** é um microsserviço desenvolvido em **Python** e **FastAPI** voltado ao cálculo de regras de precificação, concessão de cupons de desconto por fidelidade, tarifação de frete logístico por peso e região geográfica, além da gestão do ciclo de vida de pedidos (*Draft*, *Confirmed*, *Cancelled*).
+O **Gusto** é uma plataforma moderna e minimalista para descoberta, curadoria e compartilhamento de receitas culinárias. O projeto adota uma arquitetura em **monorepo**, composta por:
 
-O foco deste projeto não reside na complexidade computacional do sistema, mas sim na **implementação de uma esteira robusta de QAOps (Quality Assurance in DevOps)**, garantindo que alterações inadequadas, quebras de contrato, falhas de segurança em dependências e regressões funcionais sejam detectadas precocemente e bloqueiem a progressão do software em direção à produção.
+1. **Backend (Microsserviço de API REST):** Desenvolvido em **Next.js 15**, **TypeScript**, **Prisma ORM** e **PostgreSQL**. É responsável por regras de negócio sensíveis, incluindo:
+   * **Autenticação e Sessões:** Criptografia de senhas com bcrypt (12 salt rounds), emissão de tokens JWT de acesso (15 min) e rotação de Refresh Tokens (30 dias) com mecanismo anti-reuso (purga de sessões comprometidas).
+   * **Recuperação de Senha com OTP:** Geração determinística de códigos de verificação de 6 dígitos descartáveis, com expiração em 10 minutos e hashing de segurança.
+   * **Proteção contra Abuso (Rate Limiting):** Limitador de taxa em memória por endereço IP (`x-forwarded-for` / `x-real-ip`) para mitigar ataques de força bruta em rotas críticas de login e redefinição de credenciais.
+   * **Normalização TheMealDB:** Mecanismo de tradução e conversão de receitas externas, transformando frações culinárias imperfeitas (`1/2 cup`, `1 1/2 tbsp`), unidades de medida e ingredientes em entidades estruturadas em português brasileiro.
+   * **Validação de Domínio:** Schemas estritos com **Zod** para inserção de receitas, ingredientes e passos de preparo.
+
+2. **Android App (Cliente Mobile):** Desenvolvido nativamente em **Kotlin** e **Jetpack Compose** com Material 3, tema OLED True Black (#000000) e arquitetura MVVM/Clean.
 
 ---
 
 ## 2. Estrutura do Repositório
 
 ```text
+T2/
 ├── .github/
 │   └── workflows/
-│       └── ci-pipeline.yml         # Definição declarativa do pipeline no GitHub Actions
+│       └── ci-pipeline.yml         # Pipeline declarativo no GitHub Actions (QAOps)
+├── backend/                        # Backend sob teste (Next.js 15 + Prisma + Vitest)
+│   ├── prisma/
+│   │   ├── schema.prisma           # Modelagem de dados relacional
+│   │   └── seed.ts                 # Carga de dados inicial
+│   ├── src/
+│   │   ├── app/api/                # Rotas HTTP REST (Auth, Recipes, Fridge, etc.)
+│   │   │   ├── auth/               # Register, Login, Refresh, Forgot-Password, Reset-Password
+│   │   │   └── recipes/            # CRUD e catálogo unificado de receitas
+│   │   └── lib/                    # Regras de negócio, segurança e utilitários
+│   │       ├── auth.ts             # Criptografia, JWT, rotação e OTP
+│   │       ├── email.ts            # Provedor de e-mail transacional
+│   │       ├── mealdb.ts           # Normalizador e tradutor de dados
+│   │       ├── prisma.ts           # Singleton Prisma Client com Connection Pooling
+│   │       └── rate-limit.ts       # Rate Limiter em memória por IP
+│   ├── tests/                      # Suíte de testes automatizados com Vitest
+│   │   ├── auth.test.ts            # Testes unitários de auth, hash, tokens e OTP
+│   │   ├── rate-limit.test.ts      # Testes de rate limiting e proteção anti-abuso
+│   │   ├── mealdb.test.ts          # Testes de parser de medidas e traduções
+│   │   ├── api-auth.test.ts        # Testes de integração de rotas de autenticação
+│   │   └── recipes.test.ts         # Testes de rotas de catálogo e criação de receitas
+│   ├── package.json                # Dependências e scripts de execução/QA
+│   ├── tsconfig.json               # Configurações do compilador TypeScript
+│   └── vitest.config.mts           # Configuração de testes e cobertura (thresholds)
+├── android/                        # Aplicativo nativo Android (Kotlin + Jetpack Compose)
 ├── docs/
-│   ├── relatorio_tecnico_devops_qaops.md  # Relatório técnico completo (6 a 10 páginas)
+│   ├── relatorio_tecnico_devops_qaops.md  # Relatório técnico completo (seções 1 a 9)
 │   └── roteiro_apresentacao_defesa.md     # Roteiro guiado para defesa oral (10-12 min)
 ├── scripts/
-│   └── simulate_failure.py         # Utilitário para reproduzir o experimento aprovado/reprovado
-├── src/
-│   ├── __init__.py                 # Metadados e versão da aplicação (1.0.0)
-│   ├── exceptions.py               # Exceções de domínio (OrderNotFoundError, InvalidOrderStateError, etc.)
-│   ├── main.py                     # Rotas HTTP REST e tratamento de erros
-│   ├── models.py                   # Modelos de dados e validações estruturais com Pydantic
-│   └── services.py                 # Regras de negócio, cálculo de descontos, fretes e ciclo de vida
-├── tests/
-│   ├── __init__.py
-│   ├── test_api.py                 # Testes de integração de rotas e contratos HTTP
-│   └── test_services.py            # Testes unitários de regras de negócio e cálculo
-├── .flake8                         # Configuração de linter PEP8
-├── .gitignore                      # Regras de exclusão do controle de versão
-├── pyproject.toml                  # Configuração do Pytest (coverage 85%) e Black
-├── requirements.txt                # Dependências declarativas de produção
-├── requirements-dev.txt            # Dependências declarativas de desenvolvimento e QA
+│   └── simulate_failure.js         # Utilitário para reprodução de experimento aprovado/reprovado
+├── package.json                    # Scripts auxiliares para execução na raiz
 └── README.md                       # Documentação técnica do projeto
 ```
 
 ---
 
-## 3. Instalação e Execução Local
+## 3. Arquitetura do Pipeline de QAOps
 
-### Pré-requisitos
-* Python 3.11 ou superior
-* Git instalado
-
-### Passo a Passo
-
-1. **Clonar o repositório:**
-   ```bash
-   git clone <URL_DO_REPOSITORIO>
-   cd T2
-   ```
-
-2. **Criar e ativar o ambiente virtual (recomendado):**
-   ```bash
-   python -m venv .venv
-   # Windows (PowerShell):
-   .venv\Scripts\Activate.ps1
-   # Linux / macOS:
-   source .venv/bin/activate
-   ```
-
-3. **Instalar dependências de produção e ferramentas de qualidade:**
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements-dev.txt
-   ```
-
-4. **Executar a API localmente:**
-   ```bash
-   uvicorn src.main:app --reload --port 8000
-   ```
-   * A documentação interativa OpenAPI/Swagger estará acessível em: `http://localhost:8000/docs`
-   * Health Check: `http://localhost:8000/health`
-
----
-
-## 4. Execução Manual dos Testes e Verificações
-
-Cada verificação pode ser executada isoladamente ou em lote localmente pelo desenvolvedor antes de realizar o `push`:
-
-```bash
-# 1. Validação de Build e Compilação prévia
-python -m compileall src
-
-# 2. Formatação com Black e Linter com Flake8
-black --check src tests
-flake8 src tests
-
-# 3. Auditoria de Segurança de Dependências (SAST de pacotes)
-pip-audit -r requirements.txt --desc on
-
-# 4. Execução de Testes com Relatório de Cobertura (Threshold >= 85%)
-pytest
-```
-
----
-
-## 5. Arquitetura do Pipeline de CI/CD (GitHub Actions)
-
-O pipeline `.github/workflows/ci-pipeline.yml` é disparado automaticamente a cada evento de `push` ou `pull_request` direcionado ao branch `main`, ou manualmente via `workflow_dispatch`.
+O pipeline de Integração Contínua foi estruturado na esteira do **GitHub Actions** seguindo os princípios de *fail-fast*, feedback contínuo e geração sistemática de evidências.
 
 ```mermaid
 flowchart TD
-    A[Disparo: Push / Pull Request / Dispatch] --> B[1. Checkout do Código]
-    B --> C[2. Setup Python 3.11 + Cache de Pacotes]
-    C --> D[3. Instalação de Dependências Declarativas]
-    D --> E{Gate 1: Build / Validação de Sintaxe}
-    E -- Falha --> Z[BLOQUEIO DA ESTEIRA: Alerta Imediato]
-    E -- Sucesso --> F{Gate 2: Análise Estática - Flake8 & Black}
-    F -- Falha --> Z
-    F -- Sucesso --> G{Gate 3: Auditoria de Segurança - pip-audit}
-    G -- Falha --> Z
-    G -- Sucesso --> H{Gate 4: Testes Automatizados - Pytest}
-    H -- Falha --> Z
-    H -- Sucesso --> I{Gate 5: Cobertura de Código >= 85%}
-    I -- Falha --> Z
-    I -- Sucesso --> J[Preservação de Evidências: JUnit XML & Coverage HTML]
-    J --> K[Pipeline APROVADO com Sucesso!]
+    A["Commit / Pull Request"] --> B["Checkout & Setup Node.js 20 LTS"]
+    B --> C["Instalação de Dependências (npm ci)"]
+    C --> D["Geração de Tipos do Prisma ORM"]
+    D --> E["Quality Gate 1: Typecheck (TypeScript 5.7)"]
+    E -- Erro de Tipo --> F1["❌ Bloqueio Imediato do Pipeline"]
+    E -- Sucesso --> G["Quality Gate 2: Auditoria de Segurança (npm audit)"]
+    G -- CVE Crítica --> F2["❌ Bloqueio por Vulnerabilidade"]
+    G -- Sucesso --> H["Quality Gate 3: Testes Automatizados (Vitest 5.0)"]
+    H -- Teste Falhou --> F3["❌ Bloqueio por Regressão Funcional"]
+    H -- 48/48 Aprovados --> I["Quality Gate 4: Cobertura de Código (V8 >= 80%)"]
+    I -- Cobertura < 80% --> F4["❌ Bloqueio por Falta de Teste"]
+    I -- Cobertura >= 80% --> J["Relatório no Job Summary & Upload de Artefatos"]
+    J --> K["✅ Software Aprovado para Entrega"]
 ```
 
 ---
 
-## 6. Fichas dos Quality Gates
+## 4. Matriz de Quality Gates
 
-| Gate | Critério Objetivo | Risco Controlado | Momento | Evidência Gerada | Consequência da Falha |
-|---|---|---|---|---|---|
-| **Gate 1: Build & Sintaxe** | `python -m compileall src` sem erro de sintaxe/importação | Código que não inicializa ou quebra no boot | Imediato após instalação | Log de compilação de bytecode | Bloqueio imediato |
-| **Gate 2: Análise Estática** | Zero violações PEP8 (`flake8`) e formatação uniforme (`black`) | Débito técnico, variáveis mortas e código ilegível | Pré-execução dos testes | Relatório de conformidade no console | Bloqueio imediato |
-| **Gate 3: Segurança** | Zero CVEs conhecidas nas dependências de produção (`pip-audit`) | Invasões e exploração de brechas conhecidas (OWASP A06) | Pré-testes | Relatório de vulnerabilidades auditadas | Bloqueio e solicitação de patch |
-| **Gate 4: Testes Automatizados** | 100% de sucesso em testes unitários e de integração (19 testes) | Regressão de regras de negócio, cálculo incorreto de frete/desconto | Execução de testes | Relatório JUnit XML (`test-reports/junit.xml`) | Bloqueio imediato |
-| **Gate 5: Cobertura de Código** | Cobertura total das linhas de `src/` superior a 85% (alcançado: 100%) | Lógica obscura e sem verificação automatizada | Pós-testes | Relatório XML/HTML (`test-reports/coverage_html`) | Bloqueio da esteira |
-
----
-
-## 7. Procedimento do Experimento Obrigatório
-
-O trabalho acadêmico exige a demonstração de: (1) um cenário aprovado, (2) um cenário reprovado controlado e (3) a correção com nova aprovação.
-
-Para facilitar e agilizar os testes, foi desenvolvido o script `scripts/simulate_failure.py`.
-
-### Cenário 1: Execução Aprovada
-1. Certifique-se de que o repositório está no estado padrão limpo.
-2. Execute localmente ou envie para o GitHub:
-   ```bash
-   pytest
-   git push origin main
-   ```
-3. **Resultado:** Todos os 5 Quality Gates são aprovados com sinal verde (`✓`).
-
-### Cenário 2: Execução Reprovada (Falha Controlada)
-1. Injete uma regressão intencional no cálculo do subtotal da regra de negócio:
-   ```bash
-   python scripts/simulate_failure.py --cause test
-   ```
-2. Realize o commit e envie a alteração para disparar o pipeline:
-   ```bash
-   git add src/services.py
-   git commit -m "feat: alteracao experimental para validar bloqueio do pipeline"
-   git push origin main
-   ```
-3. **Resultado:** O pipeline é interrompido no **Quality Gate 4 (Testes Automatizados)**. A alteração indevida é barrada antes de qualquer possibilidade de deploy.
-
-### Cenário 3: Correção e Restauração do Pipeline
-1. Reverta a alteração indevida:
-   ```bash
-   python scripts/simulate_failure.py --revert
-   ```
-2. Realize o commit da correção:
-   ```bash
-   git add src/services.py
-   git commit -m "fix: restaurada a regra correta de calculo do subtotal"
-   git push origin main
-   ```
-3. **Resultado:** O pipeline volta a rodar com sucesso, registrando o histórico de auditoria completo.
+| Gate | Ferramenta | Critério Objetivo de Aprovação | Risco Mitigado | Consequência |
+| :--- | :--- | :--- | :--- | :--- |
+| **Gate 1: Build / Typecheck** | `tsc --noEmit` | Zero erros de tipagem estática e compilação | Código com quebra de contrato sintático ou tipos incompatíveis | **Bloqueio Total** |
+| **Gate 2: Segurança de Dependências** | `npm audit` | Zero vulnerabilidades de severidade crítica | Invasão e comprometimento por supply-chain attacks conhecidos | **Bloqueio Total** |
+| **Gate 3: Testes Automatizados** | `vitest run` | 100% dos testes unitários e de rotas aprovados (48 testes) | Regressões funcionais em autenticação, OTP, rate limit e receitas | **Bloqueio Total** |
+| **Gate 4: Cobertura Mínima de Código** | `@vitest/coverage-v8` | Cobertura >= 80% de Linhas, Instruções e Funções nos módulos críticos | Áreas sensíveis de negócio alteradas sem validação automatizada | **Bloqueio Total** |
 
 ---
 
-## 8. Relatório Técnico e Roteiro de Apresentação
+## 5. Instruções de Instalação e Execução Local
 
-* O relatório técnico formal de acordo com as exigências de 6 a 10 páginas da disciplina encontra-se disponível em: [`docs/relatorio_tecnico_devops_qaops.md`](file:///c:/Users/gleis/OneDrive/Desktop/T2/docs/relatorio_tecnico_devops_qaops.md)
-* O guia com falas e minutagem para a apresentação de 10 a 12 minutos encontra-se em: [`docs/roteiro_apresentacao_defesa.md`](file:///c:/Users/gleis/OneDrive/Desktop/T2/docs/roteiro_apresentacao_defesa.md)
+### Pré-requisitos
+* **Node.js** v20.x ou v22.x LTS instalado.
+* **Git** instalado.
+
+### Passo a Passo
+
+1. **Instalar as dependências do backend:**
+   ```bash
+   cd backend
+   npm install
+   ```
+
+2. **Gerar os tipos do Prisma Client:**
+   ```bash
+   npx prisma generate
+   ```
+
+3. **Executar a validação completa de QAOps localmente (Typecheck + Cobertura):**
+   ```bash
+   npm run qa
+   ```
+
+4. **Executar os testes automatizados individualmente:**
+   ```bash
+   # Execução rápida de todos os testes
+   npm test
+
+   # Execução com relatório detalhado de cobertura (LCOV, HTML e Terminal)
+   npm run test:coverage
+
+   # Verificação estática de tipos
+   npm run typecheck
+   ```
+
+---
+
+## 6. Experimento Obrigatório: Cenário Aprovado vs. Reprovado
+
+Para validar a eficácia dos *Quality Gates* em bloquear alterações defeituosas no fluxo contínuo, foi construído o script de automação [`scripts/simulate_failure.js`](file:///C:/Users/gleis/OneDrive/Desktop/T2/scripts/simulate_failure.js).
+
+### Procedimento Experimental
+
+1. **Cenário 1 — Execução Aprovada (Baseline de Qualidade):**
+   ```bash
+   npm test
+   # Resultado: 48 testes passam com sucesso (100%), cobertura acima de 86%.
+   ```
+
+2. **Cenário 2 — Injeção de Falha Funcional Deliberada (Regressão de Negócio):**
+   ```bash
+   node scripts/simulate_failure.js --inject-test-failure
+   npm test
+   # Resultado: O teste de segurança de OTP falha, interrompendo a esteira e bloqueando o avanço.
+   ```
+
+3. **Cenário 3 — Injeção de Falha de Tipagem (Quebra de Contrato Estático):**
+   ```bash
+   node scripts/simulate_failure.js --inject-type-failure
+   npm --prefix backend run typecheck
+   # Resultado: O Quality Gate 1 falha imediatamente na fase de checagem estática antes dos testes.
+   ```
+
+4. **Cenário 4 — Correção e Restauração (Re-execução Aprovada):**
+   ```bash
+   node scripts/simulate_failure.js --revert
+   npm test
+   # Resultado: Código restaurado ao estado íntegro, todos os gates voltam a ficar verdes.
+   ```
+
+---
+
+## 7. Documentação Técnica da Disciplina
+
+* 📄 **[Relatório Técnico Completo de DevOps e QAOps](file:///C:/Users/gleis/OneDrive/Desktop/T2/docs/relatorio_tecnico_devops_qaops.md)**: Documento aprofundado cobrindo as 9 seções obrigatórias (Identificação, Contexto, Riscos, Pipeline, Testes, Quality Gates, Experimento, Análise Crítica e Contribuições).
+* 🎤 **[Roteiro de Apresentação e Defesa Oral](file:///C:/Users/gleis/OneDrive/Desktop/T2/docs/roteiro_apresentacao_defesa.md)**: Estrutura cronometrada (10 a 12 minutos) com divisão de falas da dupla e respostas para a banca avaliadora.

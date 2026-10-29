@@ -1,109 +1,139 @@
-# Roteiro de Demonstração e Defesa Oral (10 a 12 Minutos)
-**Projeto Prático DevOps & QAOps — OrderFlow API**
-
-Este documento é um guia passo a passo para a dupla realizar a apresentação para o professor, com minutagem sugerida, divisão de falas, telas a serem exibidas e respostas antecipadas para as perguntas prováveis da banca.
+# Roteiro de Apresentação e Defesa Oral (10 a 12 Minutos)
+## Trabalho Prático de DevOps e QAOps — Gusto Platform
 
 ---
 
-## Estrutura do Tempo (Total: 10 a 12 Minutos)
+### Visão Geral da Apresentação
+* **Tempo Total Estipulado:** 10 a 12 minutos (com tempo extra para perguntas da banca);
+* **Divisão de Papéis:**
+  * **Integrante 1 (Gleison Sousa):** Contexto da aplicação, arquitetura do Gusto Backend, riscos de qualidade e demonstração prática do experimento de falha/bloqueio;
+  * **Integrante 2 (Integrante da Dupla):** Arquitetura do pipeline no GitHub Actions, estratégia dos 4 Quality Gates, análise crítica e maturidade QAOps.
+* **Recursos para Apresentação:**
+  * Tela 1: Repositório GitHub aberto na aba **Actions** (mostrando as execuções e o Job Summary);
+  * Tela 2: Terminal aberto no VS Code / PowerShell executando o comando `npm test` e o script `simulate_failure.js`.
+
+---
+
+### Cronograma Minuto a Minuto
 
 ```text
-[00:00 - 02:00] (2 min) -> Introdução, Contexto do Sistema e Riscos
-[02:00 - 04:00] (2 min) -> Arquitetura do Pipeline e Quality Gates
-[04:00 - 06:30] (2.5 min) -> Demonstração ao Vivo: Cenário Aprovado e Evidências
-[06:30 - 09:00] (2.5 min) -> Demonstração ao Vivo: Cenário Reprovado e Bloqueio
-[09:00 - 10:30] (1.5 min) -> Correção, Nova Aprovação e Histórico
-[10:30 - 12:00] (1.5 min) -> Conclusão, Análise Crítica e Fechamento
+[00:00 - 02:00] Abertura, Contextualização e Arquitetura do Gusto (Integrante 1)
+[02:00 - 04:30] Pipeline no GitHub Actions e Matriz de Quality Gates (Integrante 2)
+[04:30 - 07:30] Demonstração Prática: Execução Aprovada vs. Reprovada (Ambos)
+[07:30 - 09:30] Análise Crítica, Evidências e Limitações (Integrante 2)
+[09:30 - 11:00] Conclusão, Métricas DORA e Próximos Passos (Integrante 1)
+[11:00 - 12:00] Considerações Finais e Abertura para Perguntas da Banca (Ambos)
 ```
 
 ---
 
-## Roteiro Minuto a Minuto
+### Roteiro Detalhado de Falas
 
-### 1. Introdução e Contextualização (Minutos 00:00 a 02:00) — Integrante 1
-* **O que falar:**
-  > "Olá, professor. Nosso trabalho tem como tema a integração contínua da qualidade no fluxo DevOps, ou seja, o QAOps. Para este projeto, desenvolvemos o **OrderFlow API**, um microsserviço em Python com FastAPI voltado à precificação, regras de cupons, fidelidade de clientes e cálculo de frete logístico.  
-  > Em vez de tratarmos a qualidade como uma verificação manual ao final do ciclo, nosso objetivo central foi responder à pergunta: *como automatizar verificações objetivas que detectem alterações inadequadas e impeçam seu avanço no fluxo de entrega?*  
-  > Mapeamos riscos essenciais como quebra de sintaxe, código despadronizado, vulnerabilidades em dependências externas e regressões em cálculos financeiros."
-* **O que mostrar na tela:** O slide inicial ou a seção 1 e 2 do `README.md` no repositório.
+#### Bloco 1: Contexto e Arquitetura do Sistema (00:00 - 02:00)
+**Palestrante:** Integrante 1 (Gleison)
 
----
-
-### 2. O Pipeline e os Quality Gates (Minutos 02:00 a 04:00) — Integrante 2
-* **O que falar:**
-  > "Construímos o pipeline no **GitHub Actions**, configurado para ser disparado a cada `push`, `pull request` ou disparo manual no branch `main`.  
-  > Definimos **5 Quality Gates** com critérios objetivos e mensuráveis:
-  > 1. **Gate 1 (Build/Sintaxe):** Pré-compilação com `compileall` para garantir que o código inicializa.
-  > 2. **Gate 2 (Análise Estática):** Conformidade rigorosa com `black` e `flake8` contra débitos técnicos.
-  > 3. **Gate 3 (Segurança):** Auditoria de vulnerabilidades conhecidas com `pip-audit`, protegendo a cadeia de suprimentos de software.
-  > 4. **Gate 4 (Testes Automatizados):** 19 testes cobrindo regras de negócio unitárias e contratos de integração da API.
-  > 5. **Gate 5 (Cobertura de Código):** Exigência de no mínimo 85% de cobertura via `pytest-cov`, tendo nosso projeto atingido **100% de cobertura** real."
-* **O que mostrar na tela:** O arquivo `.github/workflows/ci-pipeline.yml` e o diagrama visual do pipeline.
+> *"Bom dia professor e colegas. Hoje apresentamos nosso projeto prático de DevOps e QAOps focado na automação de qualidade e bloqueio de regressões no fluxo de entrega contínua.*
+>
+> *Para o nosso estudo de caso, escolhemos a plataforma **Gusto**, uma aplicação de receitas gastronômicas estruturada em monorepo com um aplicativo nativo Android em Jetpack Compose e um microsserviço de backend de alta criticidade desenvolvido em **Next.js 15, TypeScript 5.7, Prisma ORM e PostgreSQL**.*
+>
+> *Em vez de tratar qualidade como uma etapa manual e isolada ao final do desenvolvimento, nosso objetivo foi implementar o conceito de **QAOps**: transformar a garantia da qualidade em código versionado e executado automaticamente a cada push ou pull request.*
+>
+> *Identificamos quatro grandes categorias de riscos no Gusto: regressões na criptografia e sessões JWT com Bcrypt, falhas de segurança em fluxos de recuperação de senha via OTP, vulnerabilidade a ataques de força bruta por falta de Rate Limiting e dados culinários corrompidos na integração com a API externa TheMealDB. A partir desses riscos, projetamos nossa esteira de qualidade."*
 
 ---
 
-### 3. Demonstração: Cenário 1 - Aprovado (Minutos 04:00 a 06:30) — Integrante 1
-* **O que fazer na tela:**
-  1. Abrir a aba **Actions** no repositório do GitHub (ou rodar no terminal `pytest`).
-  2. Clicar na execução mais recente que está com o ícone verde (`✓`).
-* **O que falar:**
-  > "Aqui vemos o pipeline executado com sucesso sobre a versão homologada. Em aproximadamente 45 segundos, todos os jobs foram concluídos:
-  > - O runner provisionou o Python 3.11 com cache de dependências.
-  > - A análise estática e de segurança passaram com zero alertas.
-  > - Os 19 testes passaram com 100% de sucesso.
-  > - E na etapa final, o pipeline gerou e preservou os artefatos de evidências: o relatório estruturado JUnit XML e o relatório visual de cobertura em HTML, que podem ser baixados diretamente pelo GitHub Actions para fins de auditoria de conformidade."
-* **O que mostrar na tela:** A árvore de etapas do GitHub Actions e o download dos artefatos em `Artifacts: qaops-evidencias-relatorios`.
+#### Bloco 2: O Pipeline no GitHub Actions e os Quality Gates (02:00 - 04:30)
+**Palestrante:** Integrante 2
+
+> *(Compartilha a tela com o arquivo `ci-pipeline.yml` e o GitHub Actions)*
+>
+> *"Como vocês podem ver aqui na tela, nosso pipeline foi implementado de forma declarativa no **GitHub Actions** (`ubuntu-latest`). Ele é disparado a cada `push` ou `pull request` direcionado às branches principais.*
+>
+> *Para garantir feedback rápido (menos de 1 minuto), estruturamos **4 Quality Gates** estritos que atuam em formato fail-fast:*
+>
+> 1. **Quality Gate 1 — Typecheck Rigoroso:** Usamos o compilador do TypeScript (`tsc --noEmit`). Se houver qualquer divergência de tipo ou assinatura de método, a esteira bloqueia antes mesmo de rodar os testes;
+> 2. **Quality Gate 2 — Auditoria de Dependências (SAST):** Executamos o `npm audit` com nível crítico. Nenhuma vulnerabilidade de severidade crítica em pacotes de terceiros é tolerada;
+> 3. **Quality Gate 3 — Suíte Completa de Testes Automatizados:** Executamos 48 testes unitários e de integração de rotas com o **Vitest 5.0**, cobrindo 100% das regras críticas de autenticação, rotação de refresh token com defesa anti-reuso, rate limiting em memória e conversão de frações culinárias imperfeitas;
+> 4. **Quality Gate 4 — Limite Mínimo de Cobertura de Código:** Usamos o provedor V8 do Vitest exigindo no mínimo **80% de cobertura de linhas e declarações** e **70% de branches**. Atualmente nossa linha base atinge **87.16%** de cobertura de código real.*
+>
+> *Ao final, o pipeline publica um resumo executivo direto no **Job Summary** do GitHub Actions e arquiva o relatório de cobertura em HTML/LCOV como artefato de evidência."*
 
 ---
 
-### 4. Demonstração: Cenário 2 - Reprovado Controlado (Minutos 06:30 a 09:00) — Integrante 2
-* **O que fazer na tela:**
-  1. Abrir o terminal e mostrar a injeção da falha com o comando:
-     ```bash
-     python scripts/simulate_failure.py --cause test
-     git add src/services.py
-     git commit -m "feat: alteracao experimental para validar bloqueio do pipeline"
-     git push origin main
-     ```
-  2. Alternar para a aba **Actions** do GitHub e acompanhar a execução ao vivo.
-* **O que falar:**
-  > "Agora vamos demonstrar o que acontece quando um desenvolvedor comete um erro lógico. Simulamos uma alteração que subtrai R$ 50 do subtotal de todos os pedidos.
-  > Observem que o Gate 1 de compilação passa, o Gate 2 de linter passa e o Gate 3 de segurança passa. No entanto, ao atingir o **Quality Gate 4**, a esteira detecta imediatamente as asserções inválidas.
-  > O pipeline é interrompido com status vermelho (código 1). A esteira não permite que esse código defeituoso seja empacotado, não gera artefatos de deploy e notifica a equipe do erro exato com stack trace detalhado."
-* **O que mostrar na tela:** O job falhando em vermelho na etapa `Quality Gate 4 & 5 - Testes Automatizados e Cobertura de Código`.
+#### Bloco 3: Demonstração Prática do Experimento Aprovado vs. Reprovado (04:30 - 07:30)
+**Palestrante:** Ambos (Gleison na digitação/terminal e Integrante 2 narrando)
+
+> **Passo 1: Demonstração do Cenário Aprovado**
+> * Integrante 1 roda no terminal:
+>   ```bash
+>   npm test
+>   ```
+> * Integrante 2 comenta:
+>   > *"Vejam que todos os 48 testes passam em menos de 4 segundos. A tipagem está íntegra e a cobertura está em mais de 87%."*
+>
+> **Passo 2: Injeção de Regressão Deliberada**
+> * Integrante 1 executa:
+>   ```bash
+>   node scripts/simulate_failure.js --inject-test-failure
+>   ```
+> * Integrante 1 explica:
+>   > *"Agora simulamos um cenário real: um desenvolvedor cometeu um descuido e alterou a regra de negócio da função `generateOtpCode()` em `auth.ts`, fazendo com que ela gere apenas 3 dígitos em vez dos 6 obrigatórios por contrato de segurança."*
+> * Integrante 1 roda:
+>   ```bash
+>   npm test
+>   ```
+> * A tela exibe o erro em vermelho:
+>   ```text
+>   FAIL tests/auth.test.ts > deve gerar código OTP numérico exatamente com 6 dígitos
+>   AssertionError: expected '184' to match /^\d{6}$/
+>   ```
+> * Integrante 2 comenta:
+>   > *"Observem o resultado: o Quality Gate 3 detectou a quebra imediatamente e encerrou com código 1. No GitHub Actions, o pipeline interrompe a execução, não gera o pacote e impede que essa vulnerabilidade chegue a qualquer usuário."*
+>
+> **Passo 3: Correção e Restauração da Integridade**
+> * Integrante 1 executa:
+>   ```bash
+>   node scripts/simulate_failure.js --revert
+>   npm test
+>   ```
+> * Integrante 1 comenta:
+>   > *"Aplicamos a correção, revertemos a regressão e re-executamos. Como podem ver, a suíte volta ao estado 100% verde, reabilitando a aprovação do Quality Gate."*
 
 ---
 
-### 5. Correção e Restauração (Minutos 09:00 a 10:30) — Integrante 1
-* **O que fazer na tela:**
-  1. No terminal:
-     ```bash
-     python scripts/simulate_failure.py --revert
-     git add src/services.py
-     git commit -m "fix: restaurada a regra correta de calculo do subtotal"
-     git push origin main
-     ```
-  2. Mostrar o novo commit disparando o pipeline e ficando verde novamente.
-* **O que falar:**
-  > "Aplicamos a correção, restaurando o cálculo correto, e fizemos o push. O pipeline foi disparado automaticamente, revalidou todas as barreiras de qualidade e retornou ao estado verde de aprovação. O histórico do Git e do GitHub Actions preserva a rastreabilidade completa: quem quebrou, o que quebrou, onde o gate bloqueou e quem corrigiu."
+#### Bloco 4: Análise Crítica e Respostas ao Roteiro da Disciplina (07:30 - 09:30)
+**Palestrante:** Integrante 2
+
+> *"Em nosso relatório técnico, respondemos às seis questões norteadoras da disciplina:*
+>
+> * **Riscos Cobertos vs. Residuais:** Cobrimos com excelência toda a lógica de negócio, sessões e contratos de API. Como risco residual consciente, deixamos os testes de estresse sob carga pesada e testes de renderização visual no dispositivo Android físico, que demandariam emuladores pesados no CI;
+> * **Tempo de Feedback:** Nosso ciclo de feedback completo roda em menos de 10 segundos localmente e 45 segundos na nuvem, atingindo o padrão ouro preconizado pelo DORA;
+> * **Custo de Manutenção:** O custo computacional é praticamente nulo graças aos mocks em memória do Prisma e à velocidade do Vitest;
+> * **O diferencial do QAOps:** Automação isolada é um script local que pode ser esquecido; QAOps é a qualidade institucionalizada no fluxo contínuo de engenharia, onde o software só avança se comprovar matematicamente que atende aos critérios pré-estabelecidos."*
 
 ---
 
-### 6. Conclusão e Análise Crítica (Minutos 10:30 a 12:00) — Integrante 1 e Integrante 2
-* **O que falar:**
-  > "Para finalizar, nossa análise crítica destaca que o QAOps muda a mentalidade do time: a qualidade deixa de ser uma auditoria tardia e vira uma salvaguarda contínua (*shift-left*).
-  > Como limitações do trabalho, reconhecemos que verificações manuais de usabilidade e testes de carga de alta concorrência ainda precisariam de ferramentas complementares antes de uma ida definitiva a um cluster Kubernetes.
-  > Estamos abertos às perguntas do professor. Obrigado!"
+#### Bloco 5: Conclusão e Abertura para Perguntas (09:30 - 11:00)
+**Palestrante:** Integrante 1 (Gleison)
+
+> *"Para concluir: demonstramos que o pipeline do Gusto não é apenas uma automação técnica, mas uma ferramenta de governança de software. Conseguimos cobrir riscos críticos de segurança e de negócio com um sistema reprodutível, documentado e respaldado por evidências auditáveis.*
+>
+> *Nosso repositório contém o código, os testes, as instruções no README e o relatório de 8 páginas sem anexos.*
+>
+> *Agradecemos a atenção e estamos abertos às perguntas do professor."*
 
 ---
 
-## Possíveis Perguntas do Professor e Como Responder
+### Guia de Respostas Rápidas para Perguntas da Banca
 
-1. **Pergunta: "Por que vocês escolheram usar o `pip-audit` no pipeline?"**
-   * **Resposta:** *"Escolhemos o `pip-audit` porque ele analisa o banco de dados oficial de CVEs da Python Packaging Authority (PyPA). Isso atende ao risco A06 do OWASP Top 10 (Componentes Vulneráveis e Desatualizados), garantindo que nenhuma biblioteca com falhas de segurança conhecidas seja usada em produção."*
+#### Pergunta 1: *"Por que vocês escolheram o Vitest em vez do Jest no Backend?"*
+> **Resposta:** *"O Vitest foi desenvolvido sobre a engine do Vite e possui suporte nativo a TypeScript e ESM sem necessidade de transpilação pesada com babel ou ts-jest. Além disso, executa testes com paralelismo nativo e se integra perfeitamente com o módulo de cobertura V8, executando nossos 48 testes em menos de 4 segundos."*
 
-2. **Pergunta: "Por que definir o threshold de cobertura em 85% e não em 100% como meta?"**
-   * **Resposta:** *"No nosso projeto atual atingimos 100% de cobertura. Porém, definimos a barreira mínima (threshold de corte) em 85% na configuração do pipeline porque em projetos corporativos reais exigir 100% de cobertura estrita pode levar a testes frágeis ou desencorajar refatorações. 85% garante uma margem de segurança extremamente alta para a lógica de negócio, permitindo flexibilidade em trechos não críticos."*
+#### Pergunta 2: *"Como vocês testaram o banco de dados sem conectar a uma instância externa no CI?"*
+> **Resposta:** *"Utilizamos mocks controlados do Prisma Client através do `vi.mock('@/lib/prisma')`. Isso isola as regras de negócio de rede e credenciais externas, garantindo testes determinísticos, ultra-rápidos e que nunca falham por instabilidade de conexão com o banco Neon."*
 
-3. **Pergunta: "Qual a diferença entre automação de testes e QAOps?"**
-   * **Resposta:** *"Automação de testes é apenas a criação do script que roda verificações. QAOps é a cultura e o processo integrado: os testes são executados automaticamente no fluxo de integração contínua (CI), alimentam métricas, bloqueiam deploys através de Quality Gates e produzem evidências auditáveis sem intervenção humana."*
+#### Pergunta 3: *"Por que o Quality Gate de Cobertura está fixado em 80% e não 100%?"*
+> **Resposta:** *"Exigir 100% de cobertura frequentemente incentiva testes superficiais apenas para cumprir meta numérica. Definimos 80% para cobrir todas as regras de negócio e fluxos alternativos dos módulos críticos (`auth`, `rate-limit`, rotas principais), deixando arquivos puramente declarativos de infraestrutura fora da penalização."*
+
+#### Pergunta 4: *"O que aconteceria se um desenvolvedor tentasse ignorar o pipeline e fazer merge direto?"*
+> **Resposta:** *"No GitHub Actions, configuramos o workflow para ser exigido nas regras de Branch Protection da branch `main`. Se o pipeline falhar ou não tiver sido executado, o botão de merge fica bloqueado por padrão."*
