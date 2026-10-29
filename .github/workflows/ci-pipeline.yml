@@ -1,4 +1,4 @@
-name: Gusto Platform - QAOps & Continuous Quality Pipeline
+name: edit pipeline
 
 on:
   push:
